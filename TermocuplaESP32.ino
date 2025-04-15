@@ -3,9 +3,9 @@
 #include <max6675.h>
 
 // Pines para el MAX6675
-int thermoDO = 19;    // MISO
+int thermoDO = 19;   // MISO
 int thermoCS = 5;    // CS
-int thermoCLK = 18;   // CLK
+int thermoCLK = 18;  // CLK
 
 MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
 
@@ -39,20 +39,22 @@ void loop() {
 
     HTTPClient http;
 
-    // Construir la URL con la temperatura real
-    String url = "http://puerto:8080/temperatura?valor=" + String(temperatura, 2);
-    Serial.println("🔁 Enviando solicitud a: " + url);
+    String serverUrl = "http://SERVER_IP:4000/api/temperature";
+    http.begin(serverUrl);
+    http.addHeader("Content-Type", "application/json");
 
-    http.begin(url);
-    int httpCode = http.GET();
+    // Cuerpo JSON con el valor de la temperatura
+    String jsonData = "{\"value\": " + String(temperatura, 2) + "}";
 
-    if (httpCode > 0) {
-      Serial.printf("✅ Código de respuesta: %d\n", httpCode);
+    int httpResponseCode = http.POST(jsonData);
+
+    if (httpResponseCode > 0) {
+      Serial.printf("✅ Código de respuesta: %d\n", httpResponseCode);
       String respuesta = http.getString();
       Serial.println("📨 Respuesta del servidor:");
       Serial.println(respuesta);
     } else {
-      Serial.printf("❌ Error en la solicitud: %s\n", http.errorToString(httpCode).c_str());
+      Serial.printf("❌ Error en la solicitud: %s\n", http.errorToString(httpResponseCode).c_str());
     }
 
     http.end();
@@ -60,5 +62,5 @@ void loop() {
     Serial.println("⚠️ WiFi no conectado");
   }
 
-  delay(1000); // Al menos 250ms, pero tú quieres cada 1s
+  delay(1000); // Esperar 1 segundo antes del próximo envío
 }
